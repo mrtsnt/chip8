@@ -44,3 +44,6 @@ func (h *sdlHandle) drawWindow(c *chip8) {
 	}
 	h.window.UpdateSurface()
 }
+
+func (h *sdlHandle) getPressedKey() {
+}

@@ -2,22 +2,25 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
+	//"log"
+	"math/rand"
 )
 
 type instruction struct {
 	nibbles []uint8
-	jumpPosition uint16
+	jump uint16
 	value uint8
+	u16 uint16
 }
 
 func readInstruction(bts []byte) instruction {
 	u16 := uint16(bts[0]) << 8 | uint16(bts[1])
 	return instruction{
 		nibbles: []uint8{ bts[0] >> 4, bts[0] & 0x0F, bts[1] >> 4, bts[1] & 0x0F },
-		jumpPosition: u16 & 0x0FFF,
+		jump: u16 & 0x0FFF,
 		value: uint8(u16 & 0x00FF),
+		u16: u16,
 	}
 }
 
@@ -39,32 +42,124 @@ func runEmulator(chip *chip8, handle *sdlHandle) {
 		instr := readInstruction(chip.memory[chip.pc : chip.pc+2])
 		chip.pc += 2
 
-		switch instr.nibbles[0] {
-		case 0x0:
+		switch {
+		case instr.u16 == 0x00E0: // clear
 			chip.clearScreen()
 			handle.drawWindow(chip)
 
-		case 0x1:
-			chip.pc = instr.jumpPosition
+		case instr.u16 == 0x00EE: // exit routine
+			chip.sp--
+			chip.pc = chip.stack[chip.sp]
 
-		case 0x6:
+		case instr.nibbles[0] == 0x1: // jump
+			chip.pc = instr.jump
+
+		case instr.nibbles[0] == 0x2: // call routine
+			chip.stack[chip.sp] = chip.pc
+			chip.pc = instr.jump
+			chip.sp++
+
+		case instr.nibbles[0] == 0x3: // skip if equal value
+			reg := instr.nibbles[1]
+			if chip.registers[reg] == instr.value {
+				chip.pc += 2
+			}
+
+		case instr.nibbles[0] == 0x4: // skip if not equal value
+			reg := instr.nibbles[1]
+			if chip.registers[reg] != instr.value {
+				chip.pc += 2
+			}
+
+		case instr.nibbles[0] == 0x5: // skip if equal registers
+			regOne := instr.nibbles[1]
+			regTwo := instr.nibbles[2]
+			if chip.registers[regOne] == chip.registers[regTwo] {
+				chip.pc += 2
+			}
+
+		case instr.nibbles[0] == 0x6: // set register to value
 			register := instr.nibbles[1]
 			chip.registers[register] = instr.value
 
-		case 0x7:
+		case instr.nibbles[0] == 0x7: // add value to register
 			register := instr.nibbles[1]
 			chip.registers[register] += instr.value
 
-		case 0xA:
-			chip.i = instr.jumpPosition
+		case instr.nibbles[0] == 0x8: // arithmetic
+			regOne := instr.nibbles[1]
+			regTwo := instr.nibbles[2]
 
-		case 0xD:
+			switch instr.nibbles[3] {
+			case 0x0: // set first register to second
+				chip.registers[regOne] = chip.registers[regTwo]
+
+			case 0x1: // or
+				chip.registers[regOne] = chip.registers[regOne] | chip.registers[regTwo]
+
+			case 0x2: // and
+				chip.registers[regOne] = chip.registers[regOne] & chip.registers[regTwo]
+
+			case 0x3: // xor
+				chip.registers[regOne] = chip.registers[regOne] ^ chip.registers[regTwo]
+
+			case 0x4: // add
+				res := uint16(chip.registers[regOne]) + uint16(chip.registers[regTwo])
+				if res > 255 {
+					chip.registers[0xF] = 1
+				}
+				chip.registers[regOne] = uint8(res)
+
+			case 0x5: // substract first from second
+				if chip.registers[regOne] > chip.registers[regTwo] {
+					chip.registers[0xF] = 1
+				} else {
+					chip.registers[0xF] = 0
+				}
+				chip.registers[regOne] = chip.registers[regOne] - chip.registers[regTwo]
+
+			case 0x6: // shift right
+				chip.registers[0xF] = chip.registers[regTwo] & 0x1
+				chip.registers[regOne] = chip.registers[regTwo] >> 1
+
+			case 0x7: // substract second from first 
+				if chip.registers[regTwo] > chip.registers[regOne] {
+					chip.registers[0xF] = 1
+				} else {
+					chip.registers[0xF] = 0
+				}
+				chip.registers[regOne] = chip.registers[regTwo] - chip.registers[regOne]
+
+			case 0x8: // shift left
+				chip.registers[0xF] = (chip.registers[regTwo] & 0x80) >> 7
+				chip.registers[regOne] = chip.registers[regTwo] << 1
+			}
+
+		case instr.nibbles[0] == 0x9: // skip if not equal registers
+			regOne := instr.nibbles[1]
+			regTwo := instr.nibbles[2]
+			if chip.registers[regOne] != chip.registers[regTwo] {
+				chip.pc += 2
+			}
+
+		case instr.nibbles[0] == 0xA: // set index register
+			chip.index = instr.jump
+
+		case instr.nibbles[0] == 0xB: // jump with offset
+			chip.pc = uint16(instr.value) + uint16(chip.registers[0x0])
+
+		case instr.nibbles[0] == 0xC: // random
+			reg := instr.nibbles[1]
+			chip.registers[reg] = uint8(rand.Uint32()) & instr.value
+
+		// TODO: cleanup mess
+		case instr.nibbles[0] == 0xD: // draw 
 			chip.registers[0xF] = 0
 			rows := instr.nibbles[3]
 			y := chip.registers[instr.nibbles[2]] % 32
 			for r := uint8(0); r < rows && y < 32; r++ {
 				x := chip.registers[instr.nibbles[1]] % 64
-				sprite := chip.memory[chip.i+uint16(r)]
+				sprite := chip.memory[chip.index + uint16(r)]
 				for bytePos := uint8(0); bytePos < 8 && x < 64; bytePos++ {
 					bitSet := sprite & (1 << (7 - bytePos))
 					if bitSet > 0 && chip.screen[y][x] {
@@ -79,8 +174,10 @@ func runEmulator(chip *chip8, handle *sdlHandle) {
 			}
 			handle.drawWindow(chip)
 
+		case instr.nibbles[0] == 0xE:
+
 		default:
-			log.Fatal("unknown instruction", instr)
+			//log.Fatal("unknown instruction", instr)
 		}
 	}
 }

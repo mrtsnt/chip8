@@ -8,7 +8,7 @@ import (
 type chip8 struct {
 	memory [4096]byte
 	pc uint16
-	i uint16
+	index uint16
 	registers [16]uint8
 	delayTimer uint16
 	soundTimer uint16
