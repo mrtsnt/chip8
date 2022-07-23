@@ -1,25 +1,25 @@
 package main
 
 import (
-	"time"
 	"os"
+	"time"
 )
 
 type chip8 struct {
-	memory [4096]byte
-	pc uint16
-	index uint16
-	registers [16]uint8
+	memory     [4096]byte
+	pc         uint16
+	index      uint16
+	registers  [16]uint8
 	delayTimer uint16
 	soundTimer uint16
-	sp uint16
-	stack [128]uint16
-	screen [32][64]bool
+	sp         uint16
+	stack      [128]uint16
+	screen     [32][64]bool
 }
 
-func newChip(file string) (*chip8) {
-	chip := &chip8{pc: 0x200}
-	font := []byte {
+func newChip(file string) chip8 {
+	chip := chip8{pc: 0x200}
+	font := []byte{
 		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 		0x20, 0x60, 0x20, 0x20, 0x70, // 1
 		0xF0, 0x10, 0xF0, 0x80, 0xF0, // 2
@@ -39,7 +39,7 @@ func newChip(file string) (*chip8) {
 	}
 
 	for i, v := range font {
-		chip.memory[0x50 + i] = v
+		chip.memory[0x50+i] = v
 	}
 
 	f, err := os.Open(file)

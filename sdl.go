@@ -4,13 +4,12 @@ import (
 	"github.com/veandco/go-sdl2/sdl"
 )
 
-
 type sdlHandle struct {
 	surface *sdl.Surface
-	window *sdl.Window
+	window  *sdl.Window
 }
 
-func newSdl() *sdlHandle {
+func newSdl() sdlHandle {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
 		panic(err)
 	}
@@ -23,15 +22,15 @@ func newSdl() *sdlHandle {
 		panic(err)
 	}
 
-	return &sdlHandle{surface: srf, window: wnd}
+	return sdlHandle{surface: srf, window: wnd}
 }
 
-func (h *sdlHandle) cleanup() {
+func (h sdlHandle) cleanup() {
 	h.window.Destroy()
 	sdl.Quit()
 }
 
-func (h *sdlHandle) drawWindow(c *chip8) {
+func (h sdlHandle) drawWindow(c chip8) {
 	for row := 0; row < 32; row++ {
 		for col := 0; col < 64; col++ {
 			var color uint32
@@ -45,5 +44,8 @@ func (h *sdlHandle) drawWindow(c *chip8) {
 	h.window.UpdateSurface()
 }
 
-func (h *sdlHandle) getPressedKey() {
+func (h sdlHandle) getPressedKey() {
+}
+
+func (h sdlHandle) getPressedKeyBlock() {
 }
