@@ -157,7 +157,37 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			}
 			handle.drawWindow(chip)
 
-		case instr.nibbles[0] == 0xE:
+		case instr.nibbles[0] == 0xE && instr.nibbles[3] == 0xE: // skip if pressed
+			key, _ := handle.getKeyPressed()
+			if instr.nibbles[1] == key {
+				chip.pc += 2
+			}
+
+		case instr.nibbles[0] == 0xE && instr.nibbles[3] == 0xE: // skip if not pressed
+			key, _ := handle.getKeyPressed()
+			if instr.nibbles[1] != key {
+				chip.pc += 2
+			}
+
+		case instr.nibbles[0] == 0xF && instr.value == 0x07: // set register to delay timer
+			chip.registers[instr.nibbles[1]] = chip.delayTimer
+	
+		case instr.nibbles[0] == 0xF && instr.value == 0x15: // set delay timer to register
+			chip.delayTimer = instr.nibbles[1]
+
+		case instr.nibbles[0] == 0xF && instr.value == 0x18: // set sound timer to register
+			chip.soundTimer = instr.nibbles[1]
+
+		case instr.nibbles[0] == 0xF && instr.value == 0x1E: // add to index register
+			chip.index += uint16(instr.nibbles[1])
+
+		case instr.nibbles[0] == 0xF && instr.value == 0x0A: // block for key
+			key, ok := handle.getKeyPressed()
+			if ok {
+				chip.registers[instr.nibbles[1]] = key
+			} else {
+				chip.pc -= 2
+			}
 
 		default:
 			log.Fatal("unknown instruction", instr)

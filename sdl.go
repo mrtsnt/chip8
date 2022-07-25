@@ -7,7 +7,22 @@ import (
 type sdlHandle struct {
 	surface *sdl.Surface
 	window  *sdl.Window
+	keyMap map[int]uint8
 }
+
+/*
+	map
+	1 2 3 4
+	Q W E R
+	A S D F
+	Z X C V
+
+	chip8 kb
+	1	2 3 C
+	4 5 6 D
+	7 8 9 E
+	A 0 B F
+*/
 
 func newSdl() sdlHandle {
 	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
@@ -22,7 +37,28 @@ func newSdl() sdlHandle {
 		panic(err)
 	}
 
-	return sdlHandle{surface: srf, window: wnd}
+	return sdlHandle{
+		surface: srf, 
+		window: wnd,
+		keyMap: map[int]uint8{
+			sdl.SCANCODE_1: 0x1,
+			sdl.SCANCODE_2: 0x2,
+			sdl.SCANCODE_3: 0x3,
+			sdl.SCANCODE_4: 0xC,
+			sdl.SCANCODE_Q: 0x4,
+			sdl.SCANCODE_W: 0x5,
+			sdl.SCANCODE_E: 0x6,
+			sdl.SCANCODE_R: 0xD,
+			sdl.SCANCODE_A: 0x7,
+			sdl.SCANCODE_S: 0x8,
+			sdl.SCANCODE_D: 0x9,
+			sdl.SCANCODE_F: 0xE,
+			sdl.SCANCODE_Z: 0xA,
+			sdl.SCANCODE_X: 0x0,
+			sdl.SCANCODE_C: 0xB,
+			sdl.SCANCODE_V: 0xF,
+		},
+	}
 }
 
 func (h sdlHandle) cleanup() {
@@ -44,8 +80,12 @@ func (h sdlHandle) drawWindow(c chip8) {
 	h.window.UpdateSurface()
 }
 
-func (h sdlHandle) getPressedKey() {
-}
-
-func (h sdlHandle) getPressedKeyBlock() {
+func (h sdlHandle) getKeyPressed() (uint8, bool) {
+	kb := sdl.GetKeyboardState()
+	for k, v := range h.keyMap {
+		if kb[k] > 0 {
+			return v, true
+		}
+	}
+	return 0xFF, false
 }

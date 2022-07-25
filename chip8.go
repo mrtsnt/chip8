@@ -10,8 +10,8 @@ type chip8 struct {
 	pc         uint16
 	index      uint16
 	registers  [16]uint8
-	delayTimer uint16
-	soundTimer uint16
+	delayTimer uint8
+	soundTimer uint8
 	sp         uint16
 	stack      [128]uint16
 	screen     [32][64]bool
