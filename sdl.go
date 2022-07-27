@@ -7,7 +7,7 @@ import (
 type sdlHandle struct {
 	surface *sdl.Surface
 	window  *sdl.Window
-	keyMap map[int]uint8
+	keyMap  map[int]uint8
 }
 
 /*
@@ -38,8 +38,8 @@ func newSdl() sdlHandle {
 	}
 
 	return sdlHandle{
-		surface: srf, 
-		window: wnd,
+		surface: srf,
+		window:  wnd,
 		keyMap: map[int]uint8{
 			sdl.SCANCODE_1: 0x1,
 			sdl.SCANCODE_2: 0x2,
@@ -83,7 +83,7 @@ func (h sdlHandle) drawWindow(c chip8) {
 func (h sdlHandle) getKeyPressed() (uint8, bool) {
 	kb := sdl.GetKeyboardState()
 	sdl.PumpEvents()
-	
+
 	for k, v := range h.keyMap {
 		if kb[k] > 0 {
 			return v, true

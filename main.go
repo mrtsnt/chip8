@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-  "os"
+	"os"
 )
 
 func main() {
@@ -171,7 +171,7 @@ func runEmulator(chip chip8, handle sdlHandle) {
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x07: // set register to delay timer
 			chip.registers[instr.nibbles[1]] = chip.delayTimer
-	
+
 		case instr.nibbles[0] == 0xF && instr.value == 0x15: // set delay timer to register
 			chip.delayTimer = instr.nibbles[1]
 
@@ -179,7 +179,11 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			chip.soundTimer = instr.nibbles[1]
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x1E: // add to index register
-			chip.index += uint16(instr.nibbles[1])
+			newIndex := chip.index + uint16(chip.registers[instr.nibbles[1]])
+			if newIndex >= 4096 {
+				chip.registers[0xF] = 1
+				chip.index = newIndex % 4096
+			}
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x0A: // block for key
 			key, ok := handle.getKeyPressed()
@@ -190,24 +194,24 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			}
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x29: // set index register to font position
-			chip.setFontPosition(instr.nibbles[1])
+			chip.setFontPosition(chip.registers[instr.nibbles[1]])
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x33: // binary coded decimal conversion
-		  tvx := chip.registers[instr.nibbles[1]]
-		  for i := uint16(0); i >= 0; i-- {
+			tvx := chip.registers[instr.nibbles[1]]
+			for i := uint16(2); i >= 0; i-- {
 				remainder := tvx % 10
-				chip.memory[chip.index + i] = remainder
+				chip.memory[chip.index+i] = remainder
 				tvx /= 10
 			}
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x55: // write registers to memory
-		  for r := uint8(0); r <= instr.nibbles[1]; r++ {
-				chip.memory[chip.index + uint16(r)] = chip.registers[r]
+			for r := uint8(0); r <= instr.nibbles[1]; r++ {
+				chip.memory[chip.index+uint16(r)] = chip.registers[r]
 			}
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x65: // write memory to registers
-		  for r := uint8(0); r <= instr.nibbles[1]; r++ {
-				chip.registers[r] = chip.memory[chip.index + uint16(r)]
+			for r := uint8(0); r <= instr.nibbles[1]; r++ {
+				chip.registers[r] = chip.memory[chip.index+uint16(r)]
 			}
 
 		default:
