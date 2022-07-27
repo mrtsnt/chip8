@@ -149,12 +149,12 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 
 		for r := uint8(0); r < spriteRows && y < 32; r++ {
 			sprite := chip.memory[chip.index+uint16(r)]
-			for bx := 0; bx + int(x) < 64 && bx < 8; bx++ {
-				loc := 64 * int(y) + int(x) + bx;
-				if chip.screen[loc] && sprite & (1 << (7 - bx)) > 0 {
+			for bx := 0; bx+int(x) < 64 && bx < 8; bx++ {
+				loc := 64*int(y) + int(x) + bx
+				if chip.screen[loc] && sprite&(1<<(7-bx)) > 0 {
 					chip.screen[loc] = false
 					chip.registers[0xF] = 1
-				} else if sprite & (1 << (7 - bx)) > 0 {
+				} else if sprite&(1<<(7-bx)) > 0 {
 					chip.screen[loc] = true
 				}
 			}
@@ -190,7 +190,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 
 	case instr.nibbles[0] == 0xF && instr.value == 0x0A: // block for key
 		pressed := false
-	  for k := 0; k < 16; k++ {
+		for k := 0; k < 16; k++ {
 			if chip.keys[k] {
 				pressed = true
 				chip.registers[instr.nibbles[1]] = uint8(k)
