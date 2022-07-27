@@ -3,16 +3,18 @@ package main
 import "os"
 
 type chip8 struct {
-	memory     [4096]byte
-	pc         uint16
-	index      uint16
-	registers  [16]uint8
-	delayTimer uint16
-	soundTimer uint8
+	memory           [4096]byte
+	pc               uint16
+	index            uint16
+	registers        [16]uint8
+	delayTimer       uint16
+	soundTimer       uint8
 	instructionCount int
-	sp         uint16
-	stack      [128]uint16
-	screen     [32][64]bool
+	sp               uint16
+	stack            [128]uint16
+	screen           [32][64]bool
+	keys             [16]bool
+	fontOffset       int
 }
 
 func newChip(file string) chip8 {
@@ -36,8 +38,9 @@ func newChip(file string) chip8 {
 		0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 	}
 
+	chip.fontOffset = 0x50
 	for i, v := range font {
-		chip.memory[0x50+i] = v
+		chip.memory[chip.fontOffset+i] = v
 	}
 
 	f, err := os.Open(file)
@@ -50,10 +53,6 @@ func newChip(file string) chip8 {
 	}
 
 	return chip
-}
-
-func (c *chip8) setFontPosition(char uint8) {
-	c.index = 0x50 + uint16(char)*5
 }
 
 func (c *chip8) clearScreen() {
