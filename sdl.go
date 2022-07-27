@@ -34,15 +34,13 @@ func (h sdlHandle) cleanup() {
 }
 
 func (h sdlHandle) drawWindow(c *chip8) {
-	for row := 0; row < 32; row++ {
-		for col := 0; col < 64; col++ {
-			var color uint32
-			if c.screen[row][col] {
-				color = 0xFFFFFFFF
-			}
-			rect := sdl.Rect{X: int32(col * 20), Y: int32(row * 20), W: 20, H: 20}
-			h.surface.FillRect(&rect, color)
+	for p := 0; p < 2048; p++ {
+		var color uint32
+		if c.screen[p] {
+			color = 0xFFFFFFFF
 		}
+		rect := sdl.Rect{X: int32(p % 64 * 20), Y: int32(p / 64 * 20), W: 20, H: 20}
+		h.surface.FillRect(&rect, color)
 	}
 	h.window.UpdateSurface()
 }

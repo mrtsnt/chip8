@@ -79,52 +79,52 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 		chip.registers[instr.nibbles[1]] += instr.value
 
 	case instr.nibbles[0] == 0x8: // arithmetic
-		regOne := instr.nibbles[1]
-		regTwo := instr.nibbles[2]
+		regX := instr.nibbles[1]
+		regY := instr.nibbles[2]
 
 		switch instr.nibbles[3] {
 		case 0x0: // set first register to second
-			chip.registers[regOne] = chip.registers[regTwo]
+			chip.registers[regX] = chip.registers[regY]
 
 		case 0x1: // or
-			chip.registers[regOne] = chip.registers[regOne] | chip.registers[regTwo]
+			chip.registers[regX] = chip.registers[regX] | chip.registers[regY]
 
 		case 0x2: // and
-			chip.registers[regOne] = chip.registers[regOne] & chip.registers[regTwo]
+			chip.registers[regX] = chip.registers[regX] & chip.registers[regY]
 
 		case 0x3: // xor
-			chip.registers[regOne] = chip.registers[regOne] ^ chip.registers[regTwo]
+			chip.registers[regX] = chip.registers[regX] ^ chip.registers[regY]
 
 		case 0x4: // add
-			res := uint16(chip.registers[regOne]) + uint16(chip.registers[regTwo])
+			res := uint16(chip.registers[regX]) + uint16(chip.registers[regY])
 			if res > 255 {
 				chip.registers[0xF] = 1
 			}
-			chip.registers[regOne] = uint8(res)
+			chip.registers[regX] = uint8(res)
 
 		case 0x5: // substract first from second
-			if chip.registers[regOne] > chip.registers[regTwo] {
+			if chip.registers[regX] > chip.registers[regY] {
 				chip.registers[0xF] = 1
 			} else {
 				chip.registers[0xF] = 0
 			}
-			chip.registers[regOne] = chip.registers[regOne] - chip.registers[regTwo]
+			chip.registers[regX] = chip.registers[regX] - chip.registers[regY]
 
 		case 0x6: // shift right
-			chip.registers[0xF] = chip.registers[regOne] & 0x1
-			chip.registers[regOne] = chip.registers[regOne] >> 1
+			chip.registers[0xF] = chip.registers[regX] & 0x1
+			chip.registers[regX] = chip.registers[regX] >> 1
 
 		case 0x7: // substract second from first
-			if chip.registers[regTwo] > chip.registers[regOne] {
+			if chip.registers[regY] > chip.registers[regX] {
 				chip.registers[0xF] = 1
 			} else {
 				chip.registers[0xF] = 0
 			}
-			chip.registers[regOne] = chip.registers[regTwo] - chip.registers[regOne]
+			chip.registers[regX] = chip.registers[regY] - chip.registers[regX]
 
 		case 0xE: // shift left
-			chip.registers[0xF] = (chip.registers[regOne] & 0x80) >> 7
-			chip.registers[regOne] = chip.registers[regOne] << 1
+			chip.registers[0xF] = (chip.registers[regX] & 0x80) >> 7
+			chip.registers[regX] = chip.registers[regX] << 1
 		}
 
 	case instr.nibbles[0] == 0x9: // skip if not equal registers
@@ -141,23 +141,22 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 	case instr.nibbles[0] == 0xC: // random
 		chip.registers[instr.nibbles[1]] = uint8(rand.Uint32()) & instr.value
 
-	// TODO: cleanup mess
 	case instr.nibbles[0] == 0xD: // draw
 		chip.registers[0xF] = 0
-		rows := instr.nibbles[3]
+		spriteRows := instr.nibbles[3]
+		x := chip.registers[instr.nibbles[1]] % 64
 		y := chip.registers[instr.nibbles[2]] % 32
-		for r := uint8(0); r < rows && y < 32; r++ {
-			x := chip.registers[instr.nibbles[1]] % 64
+
+		for r := uint8(0); r < spriteRows && y < 32; r++ {
 			sprite := chip.memory[chip.index+uint16(r)]
-			for bytePos := uint8(0); bytePos < 8 && x < 64; bytePos++ {
-				bitSet := sprite & (1 << (7 - bytePos))
-				if bitSet > 0 && chip.screen[y][x] {
-					chip.screen[y][x] = false
+			for bx := 0; bx < 8 && x < 64; bx++ {
+				loc := 64 * int(y) + int(x) + bx;
+				if chip.screen[loc] && sprite & (1 << (7 - bx)) > 0 {
+					chip.screen[loc] = false
 					chip.registers[0xF] = 1
-				} else if bitSet > 0 {
-					chip.screen[y][x] = true
+				} else if sprite & (1 << (7 - bx)) > 0 {
+					chip.screen[loc] = true
 				}
-				x++
 			}
 			y++
 		}

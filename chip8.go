@@ -12,7 +12,7 @@ type chip8 struct {
 	instructionCount int
 	sp               uint16
 	stack            [128]uint16
-	screen           [32][64]bool
+	screen           [2048]bool
 	keys             [16]bool
 	fontOffset       int
 }
@@ -56,9 +56,7 @@ func newChip(file string) chip8 {
 }
 
 func (c *chip8) clearScreen() {
-	for row := 0; row < 32; row++ {
-		for col := 0; col < 64; col++ {
-			c.screen[row][col] = false
-		}
+	for i := 0; i < 2048; i++ {
+		c.screen[i] = false
 	}
 }
