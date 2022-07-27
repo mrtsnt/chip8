@@ -82,6 +82,8 @@ func (h sdlHandle) drawWindow(c chip8) {
 
 func (h sdlHandle) getKeyPressed() (uint8, bool) {
 	kb := sdl.GetKeyboardState()
+	sdl.PumpEvents()
+	
 	for k, v := range h.keyMap {
 		if kb[k] > 0 {
 			return v, true

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
-	"os"
+  "os"
 )
 
 func main() {
@@ -187,6 +187,27 @@ func runEmulator(chip chip8, handle sdlHandle) {
 				chip.registers[instr.nibbles[1]] = key
 			} else {
 				chip.pc -= 2
+			}
+
+		case instr.nibbles[0] == 0xF && instr.value == 0x29: // set index register to font position
+			chip.setFontPosition(instr.nibbles[1])
+
+		case instr.nibbles[0] == 0xF && instr.value == 0x33: // binary coded decimal conversion
+		  tvx := chip.registers[instr.nibbles[1]]
+		  for i := uint16(0); i >= 0; i-- {
+				remainder := tvx % 10
+				chip.memory[chip.index + i] = remainder
+				tvx /= 10
+			}
+
+		case instr.nibbles[0] == 0xF && instr.value == 0x55: // write registers to memory
+		  for r := uint8(0); r <= instr.nibbles[1]; r++ {
+				chip.memory[chip.index + uint16(r)] = chip.registers[r]
+			}
+
+		case instr.nibbles[0] == 0xF && instr.value == 0x65: // write memory to registers
+		  for r := uint8(0); r <= instr.nibbles[1]; r++ {
+				chip.registers[r] = chip.memory[chip.index + uint16(r)]
 			}
 
 		default:

@@ -67,6 +67,10 @@ func newChip(file string) chip8 {
 	return chip
 }
 
+func (c *chip8) setFontPosition(char uint8) {
+	c.index = 0x50 + uint16(char) * 5
+}
+
 func (c *chip8) clearScreen() {
 	for row := 0; row < 32; row++ {
 		for col := 0; col < 64; col++ {
