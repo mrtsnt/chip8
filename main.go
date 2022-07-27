@@ -25,6 +25,8 @@ func runEmulator(chip chip8, handle sdlHandle) {
 		instr := readInstruction(chip.memory[chip.pc : chip.pc+2])
 		chip.pc += 2
 
+		fmt.Println(instr.nibbles)
+
 		switch {
 		case instr.u16 == 0x00E0: // clear
 			chip.clearScreen()
@@ -43,31 +45,25 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			chip.sp++
 
 		case instr.nibbles[0] == 0x3: // skip if equal value
-			reg := instr.nibbles[1]
-			if chip.registers[reg] == instr.value {
+			if chip.registers[instr.nibbles[1]] == instr.value {
 				chip.pc += 2
 			}
 
 		case instr.nibbles[0] == 0x4: // skip if not equal value
-			reg := instr.nibbles[1]
-			if chip.registers[reg] != instr.value {
+			if chip.registers[instr.nibbles[1]] != instr.value {
 				chip.pc += 2
 			}
 
 		case instr.nibbles[0] == 0x5: // skip if equal registers
-			regOne := instr.nibbles[1]
-			regTwo := instr.nibbles[2]
-			if chip.registers[regOne] == chip.registers[regTwo] {
+			if chip.registers[instr.nibbles[1]] == chip.registers[instr.nibbles[2]] {
 				chip.pc += 2
 			}
 
 		case instr.nibbles[0] == 0x6: // set register to value
-			register := instr.nibbles[1]
-			chip.registers[register] = instr.value
+			chip.registers[instr.nibbles[1]] = instr.value
 
 		case instr.nibbles[0] == 0x7: // add value to register
-			register := instr.nibbles[1]
-			chip.registers[register] += instr.value
+			chip.registers[instr.nibbles[1]] += instr.value
 
 		case instr.nibbles[0] == 0x8: // arithmetic
 			regOne := instr.nibbles[1]
@@ -119,9 +115,7 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			}
 
 		case instr.nibbles[0] == 0x9: // skip if not equal registers
-			regOne := instr.nibbles[1]
-			regTwo := instr.nibbles[2]
-			if chip.registers[regOne] != chip.registers[regTwo] {
+			if chip.registers[instr.nibbles[1]] != chip.registers[instr.nibbles[2]] {
 				chip.pc += 2
 			}
 
@@ -132,8 +126,7 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			chip.pc = uint16(instr.value) + uint16(chip.registers[0x0])
 
 		case instr.nibbles[0] == 0xC: // random
-			reg := instr.nibbles[1]
-			chip.registers[reg] = uint8(rand.Uint32()) & instr.value
+			chip.registers[instr.nibbles[1]] = uint8(rand.Uint32()) & instr.value
 
 		// TODO: cleanup mess
 		case instr.nibbles[0] == 0xD: // draw
@@ -170,13 +163,13 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			}
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x07: // set register to delay timer
-			chip.registers[instr.nibbles[1]] = chip.delayTimer
+			chip.registers[instr.nibbles[1]] = uint8(chip.delayTimer)
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x15: // set delay timer to register
-			chip.delayTimer = instr.nibbles[1]
+			chip.delayTimer = float32(chip.registers[instr.nibbles[1]])
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x18: // set sound timer to register
-			chip.soundTimer = instr.nibbles[1]
+			chip.soundTimer = chip.registers[instr.nibbles[1]]
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x1E: // add to index register
 			newIndex := chip.index + uint16(chip.registers[instr.nibbles[1]])
@@ -217,5 +210,7 @@ func runEmulator(chip chip8, handle sdlHandle) {
 		default:
 			log.Fatal("unknown instruction", instr)
 		}
+
+		chip.delayTimer -= 0.1
 	}
 }

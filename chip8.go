@@ -1,17 +1,15 @@
 package main
 
-import (
-	"os"
-	"time"
-)
+import "os"
 
 type chip8 struct {
 	memory     [4096]byte
 	pc         uint16
 	index      uint16
 	registers  [16]uint8
-	delayTimer uint8
+	delayTimer float32
 	soundTimer uint8
+	instructionCount int
 	sp         uint16
 	stack      [128]uint16
 	screen     [32][64]bool
@@ -50,19 +48,6 @@ func newChip(file string) chip8 {
 	if err != nil {
 		panic(err)
 	}
-
-	go func() {
-		for {
-			time.Sleep(time.Millisecond * 17) // 60hz
-			if chip.delayTimer > 0 {
-				chip.delayTimer -= 1
-			}
-
-			if chip.soundTimer > 0 {
-				chip.soundTimer -= 1
-			}
-		}
-	}()
 
 	return chip
 }
