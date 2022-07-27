@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"time"
 )
 
 func main() {
@@ -25,7 +26,11 @@ func runEmulator(chip chip8, handle sdlHandle) {
 		instr := readInstruction(chip.memory[chip.pc : chip.pc+2])
 		chip.pc += 2
 
-		fmt.Println(instr.nibbles)
+		for i := 0; i < 4; i++ {
+			fmt.Printf("%x", instr.nibbles[i])
+		}
+		fmt.Println()
+		fmt.Println(chip.delayTimer)
 
 		switch {
 		case instr.u16 == 0x00E0: // clear
@@ -156,7 +161,7 @@ func runEmulator(chip chip8, handle sdlHandle) {
 				chip.pc += 2
 			}
 
-		case instr.nibbles[0] == 0xE && instr.nibbles[3] == 0xE: // skip if not pressed
+		case instr.nibbles[0] == 0xE && instr.nibbles[3] == 0x1: // skip if not pressed
 			key, _ := handle.getKeyPressed()
 			if instr.nibbles[1] != key {
 				chip.pc += 2
@@ -166,7 +171,7 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			chip.registers[instr.nibbles[1]] = uint8(chip.delayTimer)
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x15: // set delay timer to register
-			chip.delayTimer = float32(chip.registers[instr.nibbles[1]])
+			chip.delayTimer = uint16(chip.registers[instr.nibbles[1]])
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x18: // set sound timer to register
 			chip.soundTimer = chip.registers[instr.nibbles[1]]
@@ -211,6 +216,10 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			log.Fatal("unknown instruction", instr)
 		}
 
-		chip.delayTimer -= 0.1
+		if chip.delayTimer > 0 {
+			chip.delayTimer -= 1
+		}
+
+		time.Sleep(time.Millisecond * 5)
 	}
 }
