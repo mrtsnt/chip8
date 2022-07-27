@@ -180,9 +180,9 @@ func runEmulator(chip chip8, handle sdlHandle) {
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x1E: // add to index register
 			newIndex := chip.index + uint16(chip.registers[instr.nibbles[1]])
+			chip.index = newIndex % 4096
 			if newIndex >= 4096 {
 				chip.registers[0xF] = 1
-				chip.index = newIndex % 4096
 			}
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x0A: // block for key
