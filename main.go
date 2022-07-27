@@ -123,7 +123,7 @@ func runEmulator(chip chip8, handle sdlHandle) {
 			chip.index = instr.jump
 
 		case instr.nibbles[0] == 0xB: // jump with offset
-			chip.pc = uint16(instr.value) + uint16(chip.registers[0x0])
+			chip.pc = uint16(instr.jump) + uint16(chip.registers[0x0])
 
 		case instr.nibbles[0] == 0xC: // random
 			chip.registers[instr.nibbles[1]] = uint8(rand.Uint32()) & instr.value
