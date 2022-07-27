@@ -102,8 +102,8 @@ func runEmulator(chip chip8, handle sdlHandle) {
 				chip.registers[regOne] = chip.registers[regOne] - chip.registers[regTwo]
 
 			case 0x6: // shift right
-				chip.registers[0xF] = chip.registers[regTwo] & 0x1
-				chip.registers[regOne] = chip.registers[regTwo] >> 1
+				chip.registers[0xF] = chip.registers[regOne] & 0x1
+				chip.registers[regOne] = chip.registers[regOne] >> 1
 
 			case 0x7: // substract second from first
 				if chip.registers[regTwo] > chip.registers[regOne] {
@@ -113,9 +113,9 @@ func runEmulator(chip chip8, handle sdlHandle) {
 				}
 				chip.registers[regOne] = chip.registers[regTwo] - chip.registers[regOne]
 
-			case 0x8: // shift left
-				chip.registers[0xF] = (chip.registers[regTwo] & 0x80) >> 7
-				chip.registers[regOne] = chip.registers[regTwo] << 1
+			case 0xE: // shift left
+				chip.registers[0xF] = (chip.registers[regOne] & 0x80) >> 7
+				chip.registers[regOne] = chip.registers[regOne] << 1
 			}
 
 		case instr.nibbles[0] == 0x9: // skip if not equal registers
