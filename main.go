@@ -198,9 +198,9 @@ func runEmulator(chip chip8, handle sdlHandle) {
 
 		case instr.nibbles[0] == 0xF && instr.value == 0x33: // binary coded decimal conversion
 			tvx := chip.registers[instr.nibbles[1]]
-			for i := uint16(2); i >= 0; i-- {
+			for i := 2; i >= 0; i-- {
 				remainder := tvx % 10
-				chip.memory[chip.index+i] = remainder
+				chip.memory[chip.index+uint16(i)] = remainder
 				tvx /= 10
 			}
 
