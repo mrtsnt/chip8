@@ -185,7 +185,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 
 			for r := uint8(0); r < 16 && y < uint8(chip.yLen); r++ {
 				for bp := 0; bp < 2; bp++ {
-					sprite := chip.memory[chip.index+uint16(r)+uint16(bp)]
+					sprite := chip.memory[chip.index+uint16(r*2)+uint16(bp)]
 					for bx := 0; bx+int(x)+bp*8 < chip.xLen && bx < 8; bx++ {
 						loc := chip.xLen*int(y) + int(x) + bx + bp*8
 						if chip.screen[loc] && sprite&(1<<(7-bx)) > 0 {
