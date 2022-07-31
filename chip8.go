@@ -67,7 +67,6 @@ func newChip(file string) chip8 {
 		0x66, 0xFE, 0x64, 0x62, 0x64, 0x7C, 0x60, 0x60, 0x00, 0xF0, // F
 	}
 
-
 	chip.largeFontOffset = 0x100
 	for i, v := range largeFont {
 		chip.memory[chip.largeFontOffset+i] = v
@@ -86,14 +85,14 @@ func newChip(file string) chip8 {
 }
 
 func (c *chip8) setLowRes() {
-	c.screen = make([]bool, 32 * 64)
+	c.screen = make([]bool, 32*64)
 	c.xLen = 64
 	c.yLen = 32
 	c.isHighRes = false
 }
 
 func (c *chip8) setHighRes() {
-	c.screen = make([]bool, 64 * 128)
+	c.screen = make([]bool, 64*128)
 	c.xLen = 128
 	c.yLen = 64
 	c.isHighRes = true

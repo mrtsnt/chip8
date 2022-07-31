@@ -57,30 +57,30 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 		chip.setHighRes()
 		handle.drawWindow(chip)
 
-	case instr.u16 & 0xFFF0 == 0x00C0: // shift screen down
+	case instr.u16&0xFFF0 == 0x00C0: // shift screen down
 		offset := int(instr.nibbles[3])
-		copy(chip.screen[offset * chip.xLen:], chip.screen)
-		for i := 0; i < offset * chip.xLen; i++ {
+		copy(chip.screen[offset*chip.xLen:], chip.screen)
+		for i := 0; i < offset*chip.xLen; i++ {
 			chip.screen[i] = false
 		}
 		handle.drawWindow(chip)
 
 	case instr.u16 == 0x00FB: // shift screen right
-	  for r := 0; r < chip.yLen; r++ {
+		for r := 0; r < chip.yLen; r++ {
 			offset := r * chip.xLen
 			copy(chip.screen[offset+4:offset+chip.xLen], chip.screen[offset:offset+chip.xLen])
 			for i := 0; i < 4; i++ {
-				chip.screen[offset + i] = false
+				chip.screen[offset+i] = false
 			}
 		}
 		handle.drawWindow(chip)
 
 	case instr.u16 == 0x00FC: // shift screen left
-	  for r := 0; r < chip.yLen; r++ {
+		for r := 0; r < chip.yLen; r++ {
 			offset := r * chip.xLen
 			copy(chip.screen[offset:offset+chip.xLen], chip.screen[offset+4:offset+chip.xLen])
 			for i := 0; i < 4; i++ {
-				chip.screen[offset + chip.xLen - i - 1] = false
+				chip.screen[offset+chip.xLen-i-1] = false
 			}
 		}
 		handle.drawWindow(chip)
@@ -178,7 +178,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 		chip.registers[instr.nibbles[1]] = uint8(rand.Uint32()) & instr.value
 
 	case instr.nibbles[0] == 0xD: // draw
-	  if instr.nibbles[3] == 0x0 { // high res sprite
+		if instr.nibbles[3] == 0x0 { // high res sprite
 			chip.registers[0xF] = 0
 			x := chip.registers[instr.nibbles[1]] % uint8(chip.xLen)
 			y := chip.registers[instr.nibbles[2]] % uint8(chip.yLen)
@@ -187,7 +187,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 				for bp := 0; bp < 2; bp++ {
 					sprite := chip.memory[chip.index+uint16(r)+uint16(bp)]
 					for bx := 0; bx+int(x)+bp*8 < chip.xLen && bx < 8; bx++ {
-						loc := chip.xLen*int(y) + int(x) + bx + bp * 8
+						loc := chip.xLen*int(y) + int(x) + bx + bp*8
 						if chip.screen[loc] && sprite&(1<<(7-bx)) > 0 {
 							chip.screen[loc] = false
 							chip.registers[0xF] = 1
