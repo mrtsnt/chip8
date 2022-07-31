@@ -51,9 +51,11 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 
 	case instr.u16 == 0x00FE: // switch to low res
 		chip.setLowRes()
+		handle.drawWindow(chip)
 
 	case instr.u16 == 0x00FF: // switch to high res
 		chip.setHighRes()
+		handle.drawWindow(chip)
 
 	case instr.u16 & 0xFFF0 == 0x00C0: // shift screen down
 		offset := int(instr.nibbles[3])
@@ -61,6 +63,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 		for i := 0; i < offset * chip.xLen; i++ {
 			chip.screen[i] = false
 		}
+		handle.drawWindow(chip)
 
 	case instr.u16 == 0x00FB: // shift screen right
 	  for r := 0; r < chip.yLen; r++ {
@@ -70,6 +73,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 				chip.screen[offset + i] = false
 			}
 		}
+		handle.drawWindow(chip)
 
 	case instr.u16 == 0x00FC: // shift screen left
 	  for r := 0; r < chip.yLen; r++ {
@@ -79,6 +83,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 				chip.screen[offset + chip.xLen - i - 1] = false
 			}
 		}
+		handle.drawWindow(chip)
 
 	case instr.nibbles[0] == 0x1: // jump
 		chip.pc = instr.jump
@@ -173,7 +178,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 		chip.registers[instr.nibbles[1]] = uint8(rand.Uint32()) & instr.value
 
 	case instr.nibbles[0] == 0xD: // draw
-	  if instr.nibbles[3] == 0x0 {
+	  if instr.nibbles[3] == 0x0 { // high res sprite
 			chip.registers[0xF] = 0
 			x := chip.registers[instr.nibbles[1]] % uint8(chip.xLen)
 			y := chip.registers[instr.nibbles[2]] % uint8(chip.yLen)
@@ -182,7 +187,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 				for bp := 0; bp < 2; bp++ {
 					sprite := chip.memory[chip.index+uint16(r)+uint16(bp)]
 					for bx := 0; bx+int(x)+bp*8 < chip.xLen && bx < 8; bx++ {
-						loc := chip.xLen*int(y) + int(x) + bx
+						loc := chip.xLen*int(y) + int(x) + bx + bp * 8
 						if chip.screen[loc] && sprite&(1<<(7-bx)) > 0 {
 							chip.screen[loc] = false
 							chip.registers[0xF] = 1
@@ -193,7 +198,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 				}
 				y++
 			}
-		} else {
+		} else { // low res sprite
 			chip.registers[0xF] = 0
 			spriteRows := instr.nibbles[3]
 			x := chip.registers[instr.nibbles[1]] % uint8(chip.xLen)
@@ -256,6 +261,9 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 	case instr.nibbles[0] == 0xF && instr.value == 0x29: // set index register to font position
 		chip.index = uint16(chip.fontOffset) + uint16(5*chip.registers[instr.nibbles[1]])
 
+	case instr.nibbles[0] == 0xF && instr.value == 0x30: // set index register to large font position
+		chip.index = uint16(chip.largeFontOffset) + uint16(10*chip.registers[instr.nibbles[1]])
+
 	case instr.nibbles[0] == 0xF && instr.value == 0x33: // binary coded decimal conversion
 		tvx := chip.registers[instr.nibbles[1]]
 		for i := 2; i >= 0; i-- {
@@ -273,6 +281,12 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 		for r := uint8(0); r <= instr.nibbles[1]; r++ {
 			chip.registers[r] = chip.memory[chip.index+uint16(r)]
 		}
+
+	case instr.nibbles[0] == 0xF && instr.value == 0x75: // write to flag registers
+		copy(chip.flagRegisters[:], chip.registers[:instr.nibbles[1]])
+
+	case instr.nibbles[0] == 0xF && instr.value == 0x85: // read from flag registers
+		copy(chip.registers[:instr.nibbles[1]], chip.flagRegisters[:])
 
 	default:
 		log.Fatal("unknown instruction", instr)
