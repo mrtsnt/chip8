@@ -144,13 +144,13 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 	case instr.nibbles[0] == 0xD: // draw
 		chip.registers[0xF] = 0
 		spriteRows := instr.nibbles[3]
-		x := chip.registers[instr.nibbles[1]] % 64
-		y := chip.registers[instr.nibbles[2]] % 32
+		x := chip.registers[instr.nibbles[1]] % uint8(chip.xLen)
+		y := chip.registers[instr.nibbles[2]] % uint8(chip.yLen)
 
-		for r := uint8(0); r < spriteRows && y < 32; r++ {
+		for r := uint8(0); r < spriteRows && y < uint8(chip.yLen); r++ {
 			sprite := chip.memory[chip.index+uint16(r)]
-			for bx := 0; bx+int(x) < 64 && bx < 8; bx++ {
-				loc := 64*int(y) + int(x) + bx
+			for bx := 0; bx+int(x) < chip.xLen && bx < 8; bx++ {
+				loc := chip.xLen*int(y) + int(x) + bx
 				if chip.screen[loc] && sprite&(1<<(7-bx)) > 0 {
 					chip.screen[loc] = false
 					chip.registers[0xF] = 1
@@ -178,8 +178,7 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 	case instr.nibbles[0] == 0xF && instr.value == 0x15: // set delay timer to register
 		chip.delayTimer = uint16(chip.registers[instr.nibbles[1]])
 
-	case instr.nibbles[0] == 0xF && instr.value == 0x18: // set sound timer to register
-		chip.soundTimer = chip.registers[instr.nibbles[1]]
+	case instr.nibbles[0] == 0xF && instr.value == 0x18: // set sound timer to register, not implemented
 
 	case instr.nibbles[0] == 0xF && instr.value == 0x1E: // add to index register
 		newIndex := chip.index + uint16(chip.registers[instr.nibbles[1]])

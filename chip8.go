@@ -8,17 +8,20 @@ type chip8 struct {
 	index            uint16
 	registers        [16]uint8
 	delayTimer       uint16
-	soundTimer       uint8
 	instructionCount int
 	sp               uint16
 	stack            [128]uint16
-	screen           [2048]bool
+	screen           []bool
 	keys             [16]bool
 	fontOffset       int
+	xLen             int
+	yLen             int
+	isHighRes        bool
 }
 
 func newChip(file string) chip8 {
 	chip := chip8{pc: 0x200}
+	chip.setLowRes()
 	font := []byte{
 		0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 		0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -55,8 +58,20 @@ func newChip(file string) chip8 {
 	return chip
 }
 
+func (c *chip8) setLowRes() {
+	c.screen = make([]bool, 32 * 64)
+	c.xLen = 64
+	c.yLen = 32
+}
+
+func (c *chip8) setHighRes() {
+	c.screen = make([]bool, 64 * 128)
+	c.xLen = 128
+	c.yLen = 64
+}
+
 func (c *chip8) clearScreen() {
-	for i := 0; i < 2048; i++ {
+	for i := 0; i < len(c.screen); i++ {
 		c.screen[i] = false
 	}
 }

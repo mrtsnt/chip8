@@ -34,12 +34,16 @@ func (h sdlHandle) cleanup() {
 }
 
 func (h sdlHandle) drawWindow(c *chip8) {
-	for p := 0; p < 2048; p++ {
+	pixelSize := 20
+	if c.isHighRes {
+		pixelSize = 10
+	}
+	for p := 0; p < len(c.screen); p++ {
 		var color uint32
 		if c.screen[p] {
 			color = 0xFFFFFFFF
 		}
-		rect := sdl.Rect{X: int32(p % 64 * 20), Y: int32(p / 64 * 20), W: 20, H: 20}
+		rect := sdl.Rect{X: int32(p % c.xLen * pixelSize), Y: int32(p / c.xLen * pixelSize), W: int32(pixelSize), H: int32(pixelSize)}
 		h.surface.FillRect(&rect, color)
 	}
 	h.window.UpdateSurface()
