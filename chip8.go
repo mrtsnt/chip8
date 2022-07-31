@@ -62,12 +62,14 @@ func (c *chip8) setLowRes() {
 	c.screen = make([]bool, 32 * 64)
 	c.xLen = 64
 	c.yLen = 32
+	c.isHighRes = false
 }
 
 func (c *chip8) setHighRes() {
 	c.screen = make([]bool, 64 * 128)
 	c.xLen = 128
 	c.yLen = 64
+	c.isHighRes = true
 }
 
 func (c *chip8) clearScreen() {

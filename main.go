@@ -49,6 +49,37 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 		chip.sp--
 		chip.pc = chip.stack[chip.sp]
 
+	case instr.u16 == 0x00FE: // switch to low res
+		chip.setLowRes()
+
+	case instr.u16 == 0x00FF: // switch to high res
+		chip.setHighRes()
+
+	case instr.u16 & 0xFFF0 == 0x00C0: // shift screen down
+		offset := int(instr.nibbles[3])
+		copy(chip.screen[offset * chip.xLen:], chip.screen)
+		for i := 0; i < offset * chip.xLen; i++ {
+			chip.screen[i] = false
+		}
+
+	case instr.u16 == 0x00FB: // shift screen right
+	  for r := 0; r < chip.yLen; r++ {
+			offset := r * chip.xLen
+			copy(chip.screen[offset+4:offset+chip.xLen], chip.screen[offset:offset+chip.xLen])
+			for i := 0; i < 4; i++ {
+				chip.screen[offset + i] = false
+			}
+		}
+
+	case instr.u16 == 0x00FC: // shift screen left
+	  for r := 0; r < chip.yLen; r++ {
+			offset := r * chip.xLen
+			copy(chip.screen[offset:offset+chip.xLen], chip.screen[offset+4:offset+chip.xLen])
+			for i := 0; i < 4; i++ {
+				chip.screen[offset + chip.xLen - i - 1] = false
+			}
+		}
+
 	case instr.nibbles[0] == 0x1: // jump
 		chip.pc = instr.jump
 
@@ -142,23 +173,45 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 		chip.registers[instr.nibbles[1]] = uint8(rand.Uint32()) & instr.value
 
 	case instr.nibbles[0] == 0xD: // draw
-		chip.registers[0xF] = 0
-		spriteRows := instr.nibbles[3]
-		x := chip.registers[instr.nibbles[1]] % uint8(chip.xLen)
-		y := chip.registers[instr.nibbles[2]] % uint8(chip.yLen)
+	  if instr.nibbles[3] == 0x0 {
+			chip.registers[0xF] = 0
+			x := chip.registers[instr.nibbles[1]] % uint8(chip.xLen)
+			y := chip.registers[instr.nibbles[2]] % uint8(chip.yLen)
 
-		for r := uint8(0); r < spriteRows && y < uint8(chip.yLen); r++ {
-			sprite := chip.memory[chip.index+uint16(r)]
-			for bx := 0; bx+int(x) < chip.xLen && bx < 8; bx++ {
-				loc := chip.xLen*int(y) + int(x) + bx
-				if chip.screen[loc] && sprite&(1<<(7-bx)) > 0 {
-					chip.screen[loc] = false
-					chip.registers[0xF] = 1
-				} else if sprite&(1<<(7-bx)) > 0 {
-					chip.screen[loc] = true
+			for r := uint8(0); r < 16 && y < uint8(chip.yLen); r++ {
+				for bp := 0; bp < 2; bp++ {
+					sprite := chip.memory[chip.index+uint16(r)+uint16(bp)]
+					for bx := 0; bx+int(x)+bp*8 < chip.xLen && bx < 8; bx++ {
+						loc := chip.xLen*int(y) + int(x) + bx
+						if chip.screen[loc] && sprite&(1<<(7-bx)) > 0 {
+							chip.screen[loc] = false
+							chip.registers[0xF] = 1
+						} else if sprite&(1<<(7-bx)) > 0 {
+							chip.screen[loc] = true
+						}
+					}
 				}
+				y++
 			}
-			y++
+		} else {
+			chip.registers[0xF] = 0
+			spriteRows := instr.nibbles[3]
+			x := chip.registers[instr.nibbles[1]] % uint8(chip.xLen)
+			y := chip.registers[instr.nibbles[2]] % uint8(chip.yLen)
+
+			for r := uint8(0); r < spriteRows && y < uint8(chip.yLen); r++ {
+				sprite := chip.memory[chip.index+uint16(r)]
+				for bx := 0; bx+int(x) < chip.xLen && bx < 8; bx++ {
+					loc := chip.xLen*int(y) + int(x) + bx
+					if chip.screen[loc] && sprite&(1<<(7-bx)) > 0 {
+						chip.screen[loc] = false
+						chip.registers[0xF] = 1
+					} else if sprite&(1<<(7-bx)) > 0 {
+						chip.screen[loc] = true
+					}
+				}
+				y++
+			}
 		}
 		handle.drawWindow(chip)
 
