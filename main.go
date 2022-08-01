@@ -41,57 +41,41 @@ func execute(handle sdlHandle, chip *chip8, instr instruction) {
 	chip.pc += 2
 
 	switch {
-	case instr.u16 == 0x00E0: // clear
+	case instr.u16 == 0x00E0:
 		chip.clearScreen()
 		handle.drawWindow(chip)
 
-	case instr.u16 == 0x00EE: // exit routine
-		chip.sp--
-		chip.pc = chip.stack[chip.sp]
+	case instr.u16 == 0x00EE:
+		chip.exitRoutine()
 
-	case instr.u16 == 0x00FE: // switch to low res
+	case instr.u16 == 0x00FE:
 		chip.setLowRes()
 		handle.drawWindow(chip)
 
-	case instr.u16 == 0x00FF: // switch to high res
+	case instr.u16 == 0x00FF:
 		chip.setHighRes()
 		handle.drawWindow(chip)
 
-	case instr.u16&0xFFF0 == 0x00C0: // shift screen down
-		offset := int(instr.nibbles[3])
-		copy(chip.screen[offset*chip.xLen:], chip.screen)
-		for i := 0; i < offset*chip.xLen; i++ {
-			chip.screen[i] = false
-		}
+	case instr.u16&0xFFF0 == 0x00C0:
+		rows := int(instr.nibbles[3])
+		chip.shiftScreenDown(rows)
 		handle.drawWindow(chip)
 
-	case instr.u16 == 0x00FB: // shift screen right
-		for r := 0; r < chip.yLen; r++ {
-			offset := r * chip.xLen
-			copy(chip.screen[offset+4:offset+chip.xLen], chip.screen[offset:offset+chip.xLen])
-			for i := 0; i < 4; i++ {
-				chip.screen[offset+i] = false
-			}
-		}
+	case instr.u16 == 0x00FB:
+		chip.shiftScreenRight()
 		handle.drawWindow(chip)
 
-	case instr.u16 == 0x00FC: // shift screen left
-		for r := 0; r < chip.yLen; r++ {
-			offset := r * chip.xLen
-			copy(chip.screen[offset:offset+chip.xLen], chip.screen[offset+4:offset+chip.xLen])
-			for i := 0; i < 4; i++ {
-				chip.screen[offset+chip.xLen-i-1] = false
-			}
-		}
+	case instr.u16 == 0x00FC:
+	  chip.shiftScreenLeft()
 		handle.drawWindow(chip)
 
 	case instr.nibbles[0] == 0x1: // jump
 		chip.pc = instr.jump
 
 	case instr.nibbles[0] == 0x2: // call routine
-		chip.stack[chip.sp] = chip.pc
+		chip.stack[chip.stackPointer] = chip.pc
 		chip.pc = instr.jump
-		chip.sp++
+		chip.stackPointer++
 
 	case instr.nibbles[0] == 0x3: // skip if equal value
 		if chip.registers[instr.nibbles[1]] == instr.value {

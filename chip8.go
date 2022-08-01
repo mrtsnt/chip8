@@ -8,8 +8,7 @@ type chip8 struct {
 	index            uint16
 	registers        [16]uint8
 	delayTimer       uint16
-	instructionCount int
-	sp               uint16
+	stackPointer     uint16
 	stack            [128]uint16
 	screen           []bool
 	keys             [16]bool
@@ -82,6 +81,38 @@ func newChip(file string) chip8 {
 	}
 
 	return chip
+}
+
+func (c *chip8) exitRoutine() {
+		c.stackPointer--
+		c.pc = c.stack[c.stackPointer]
+}
+
+func (c *chip8) shiftScreenDown(rows int) {
+		copy(c.screen[rows*c.xLen:], c.screen)
+		for i := 0; i < rows*c.xLen; i++ {
+			c.screen[i] = false
+		}
+}
+
+func (c *chip8) shiftScreenLeft() {
+		for r := 0; r < c.yLen; r++ {
+			offset := r * c.xLen
+			copy(c.screen[offset:offset+c.xLen], c.screen[offset+4:offset+c.xLen])
+			for i := 0; i < 4; i++ {
+				c.screen[offset+c.xLen-i-1] = false
+			}
+		}
+}
+
+func (c *chip8) shiftScreenRight() {
+		for r := 0; r < c.yLen; r++ {
+			offset := r * c.xLen
+			copy(c.screen[offset+4:offset+c.xLen], c.screen[offset:offset+c.xLen])
+			for i := 0; i < 4; i++ {
+				c.screen[offset+i] = false
+			}
+		}
 }
 
 func (c *chip8) setLowRes() {
